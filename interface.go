@@ -9,10 +9,15 @@ type DatabaseService interface {
 	Put(doc CouchDoc) (*DocumentResponse, error)
 	Post(doc CouchDoc) (*DocumentResponse, error)
 	Delete(doc CouchDoc) (*DocumentResponse, error)
+	PutAttachmentToDoc(doc CouchDoc, path string) (*DocumentResponse, error)
 	Bulk(docs []CouchDoc) ([]DocumentResponse, error)
 	Purge(req map[string][]string) (*PurgeResponse, error)
 	View(name string) ViewService
 	Seed([]DesignDocument) error
+	IndependAttachment(docid, name, rev string) (*IndependAttachment, error)
+	IndependAttachmentMeta(docid, name, rev string) (*IndependAttachment, error)
+	PutIndependAttachment(docid string, att *IndependAttachment, rev string) (*DocumentResponse, error)
+	DeleteIndependAttachment(docid, name, rev string) (*DocumentResponse, error)
 }
 
 // ViewService is an interface for dealing with a view inside a CouchDB database.

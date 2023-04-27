@@ -1,9 +1,12 @@
 package couchdb
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 
@@ -79,6 +82,49 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 	u := fmt.Sprintf("%s/%s/%s?rev=%s", db.Host, url.PathEscape(db.Name), url.PathEscape(doc.GetID()), doc.GetRev())
 	response := &DocumentResponse{}
 	err := db.Client.Delete(u, response)
+	return response, err
+}
+
+// PutAttachment adds attachment to document
+func (db *Database) PutAttachmentToDoc(doc CouchDoc, path string) (*DocumentResponse, error) {
+	// get file from disk
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	// create new writer
+	buffer := bytes.Buffer{}
+	writer := multipart.NewWriter(&buffer)
+
+	// create first "application/json" document part
+	document := Document{
+		ID:  doc.GetID(),
+		Rev: doc.GetRev(),
+	}
+	err = writeJSON(&document, writer, file)
+	if err != nil {
+		return nil, err
+	}
+
+	// write actual file content to multipart message
+	err = writeMultipart(writer, file)
+	if err != nil {
+		return nil, err
+	}
+
+	// finish multipart message and write trailing boundary
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	// create http request
+	u := fmt.Sprintf("%s/%s/%s", db.Host, url.PathEscape(db.Name), url.PathEscape(doc.GetID()))
+	contentType := fmt.Sprintf("multipart/related; boundary=%q", writer.Boundary())
+	response := &DocumentResponse{}
+	err = db.Client.PutWithData(u, &buffer, response, contentType)
 	return response, err
 }
 
