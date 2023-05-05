@@ -22,7 +22,12 @@ func (db *Database) IndependAttachment(docid, name, rev string) (*IndependAttach
 	if name == "" {
 		return nil, fmt.Errorf("couchdb.GetAttachment: empty attachment Name")
 	}
-	u := fmt.Sprintf("%s/%s/%s/%s?rev=%s", db.Host, url.PathEscape(db.Name), url.PathEscape(docid), url.PathEscape(name), url.PathEscape(rev))
+	var u string
+	if rev == "" {
+		u = fmt.Sprintf("%s/%s/%s/%s", db.Host, url.PathEscape(db.Name), url.PathEscape(docid), url.PathEscape(name))
+	} else {
+		u = fmt.Sprintf("%s/%s/%s/%s?rev=%s", db.Host, url.PathEscape(db.Name), url.PathEscape(docid), url.PathEscape(name), url.PathEscape(rev))
+	}
 	resp, err := db.Client.GetRaw(u)
 	if err != nil {
 		return nil, err
@@ -43,7 +48,12 @@ func (db *Database) IndependAttachmentMeta(docid, name, rev string) (*IndependAt
 	if name == "" {
 		return nil, fmt.Errorf("couchdb.GetAttachment: empty attachment Name")
 	}
-	u := fmt.Sprintf("%s/%s/%s/%s?rev=%s", db.Host, url.PathEscape(db.Name), url.PathEscape(docid), url.PathEscape(name), url.PathEscape(rev))
+	var u string
+	if rev == "" {
+		u = fmt.Sprintf("%s/%s/%s/%s", db.Host, url.PathEscape(db.Name), url.PathEscape(docid), url.PathEscape(name))
+	} else {
+		u = fmt.Sprintf("%s/%s/%s/%s?rev=%s", db.Host, url.PathEscape(db.Name), url.PathEscape(docid), url.PathEscape(name), url.PathEscape(rev))
+	}
 	resp, err := db.Client.Head(u)
 	if err != nil {
 		return nil, err
@@ -78,7 +88,13 @@ func (db *Database) PutIndependAttachment(docid string, att *IndependAttachment,
 		return nil, fmt.Errorf("couchdb.PutAttachment: nil attachment Body")
 	}
 
-	u := fmt.Sprintf("%s/%s/%s/%s?rev=%s", db.Host, url.PathEscape(db.Name), url.PathEscape(docid), url.PathEscape(att.Name), url.PathEscape(rev))
+	var u string
+	if rev == "" {
+		u = fmt.Sprintf("%s/%s/%s/%s", db.Host, url.PathEscape(db.Name), url.PathEscape(docid), url.PathEscape(att.Name))
+	} else {
+		u = fmt.Sprintf("%s/%s/%s/%s?rev=%s", db.Host, url.PathEscape(db.Name), url.PathEscape(docid), url.PathEscape(att.Name), url.PathEscape(rev))
+	}
+
 	response := &DocumentResponse{}
 	err := db.Client.PutWithData(u, att.Body, response, att.Type)
 	return response, err
