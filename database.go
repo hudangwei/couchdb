@@ -64,8 +64,26 @@ func (db *Database) Get(doc CouchDoc, id string) error {
 	return db.Client.Get(u, doc)
 }
 
+func (db *Database) Rev(id string) (string, error) {
+	u := fmt.Sprintf("%s/%s/%s", db.Host, url.PathEscape(db.Name), url.PathEscape(id))
+	resp, err := db.Client.Head(u)
+	if err != nil {
+		return "", err
+	}
+	etag := resp.Header.Get("Etag")
+	if etag == "" {
+		return "", fmt.Errorf("couchdb: missing Etag header in response")
+	}
+	return etag[1 : len(etag)-1], nil
+}
+
 func (db *Database) Put(doc CouchDoc) (*DocumentResponse, error) {
-	u := fmt.Sprintf("%s/%s/%s", db.Host, url.PathEscape(db.Name), url.PathEscape(doc.GetID()))
+	var u string
+	if len(doc.GetRev()) > 0 {
+		u = fmt.Sprintf("%s/%s/%s?rev=%s", db.Host, url.PathEscape(db.Name), url.PathEscape(doc.GetID()), doc.GetRev())
+	} else {
+		u = fmt.Sprintf("%s/%s/%s", db.Host, url.PathEscape(db.Name), url.PathEscape(doc.GetID()))
+	}
 	response := &DocumentResponse{}
 	err := db.Client.Put(u, doc, response)
 	return response, err
@@ -83,6 +101,41 @@ func (db *Database) Delete(doc CouchDoc) (*DocumentResponse, error) {
 	response := &DocumentResponse{}
 	err := db.Client.Delete(u, response)
 	return response, err
+}
+
+func (db *Database) Store(doc CouchDoc) (*DocumentResponse, error) {
+	rev, err := db.Rev(doc.GetID())
+	if err == nil {
+		doc.SetRev(rev)
+		//覆盖修改
+		return db.Put(doc)
+	}
+	return db.Post(doc)
+}
+
+func (db *Database) MultiStore(docs []CouchDoc) error {
+	docsMap := make(map[string]CouchDoc)
+	for _, v := range docs {
+		docsMap[v.GetID()] = v
+	}
+	resp, err := db.Bulk(docs)
+	if err != nil {
+		return err
+	}
+	var rebulkDocs []CouchDoc
+	for _, v := range resp {
+		if v.Error == "conflict" {
+			//update
+			if vv, ok := docsMap[v.ID]; ok {
+				if rev, err := db.Rev(v.ID); err == nil {
+					vv.SetRev(rev)
+					rebulkDocs = append(rebulkDocs, vv)
+				}
+			}
+		}
+	}
+	_, err = db.Bulk(rebulkDocs)
+	return err
 }
 
 // PutAttachment adds attachment to document

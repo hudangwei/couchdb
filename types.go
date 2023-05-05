@@ -62,7 +62,9 @@ type DesignDocumentView struct {
 // CouchDoc describes interface for every couchdb document.
 type CouchDoc interface {
 	GetID() string
+	SetID(string)
 	GetRev() string
+	SetRev(string)
 }
 
 // Document is base struct which should be embedded by any other couchdb document.
@@ -93,16 +95,26 @@ func (d *Document) GetID() string {
 	return d.ID
 }
 
+func (d *Document) SetID(id string) {
+	d.ID = id
+}
+
 // GetRev returns document revision
 func (d *Document) GetRev() string {
 	return d.Rev
 }
 
+func (d *Document) SetRev(rev string) {
+	d.Rev = rev
+}
+
 // DocumentResponse is response for multipart/related file upload.
 type DocumentResponse struct {
-	Ok  bool
-	ID  string
-	Rev string
+	Ok     bool   `json:"ok"`
+	ID     string `json:"id"`
+	Rev    string `json:"rev"`
+	Error  string `json:"error"`
+	Reason string `json:"reason"`
 }
 
 type PurgeResponse struct {

@@ -5,10 +5,13 @@ type DatabaseService interface {
 	AllDesignDocs() ([]DesignDocument, error)
 	Find(*FindArgs, interface{}) error
 	CreateIndex(*Index) (*CouchIndexBody, error)
+	Rev(id string) (string, error)
 	Get(doc CouchDoc, id string) error
 	Put(doc CouchDoc) (*DocumentResponse, error)
 	Post(doc CouchDoc) (*DocumentResponse, error)
 	Delete(doc CouchDoc) (*DocumentResponse, error)
+	Store(doc CouchDoc) (*DocumentResponse, error)
+	MultiStore(docs []CouchDoc) error
 	PutAttachmentToDoc(doc CouchDoc, path string) (*DocumentResponse, error)
 	Bulk(docs []CouchDoc) ([]DocumentResponse, error)
 	Purge(req map[string][]string) (*PurgeResponse, error)

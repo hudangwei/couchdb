@@ -43,8 +43,11 @@ func (c *CouchDBClient) Head(rawurl string) (*http.Response, error) {
 	resp, err := c.client.Do(req)
 	if err != nil {
 		return nil, err
+	} else if resp.StatusCode >= 400 {
+		return nil, parseError(req, resp)
+	} else {
+		return resp, nil
 	}
-	return resp, nil
 }
 
 func (c *CouchDBClient) GetRaw(rawurl string) (*http.Response, error) {
@@ -91,7 +94,10 @@ func (c *CouchDBClient) do(rawurl, method string, in, out interface{}) error {
 	}
 	defer body.Close()
 	if out != nil {
-		return json.NewDecoder(body).Decode(out)
+		b, _ := ioutil.ReadAll(body)
+		fmt.Println(string(b))
+		return json.Unmarshal(b, out)
+		// return json.NewDecoder(body).Decode(out)
 	}
 	return nil
 }
