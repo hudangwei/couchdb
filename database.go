@@ -113,17 +113,22 @@ func (db *Database) Store(doc CouchDoc) (*DocumentResponse, error) {
 	return db.Post(doc)
 }
 
-func (db *Database) MultiStore(docs []CouchDoc) error {
+func (db *Database) MultiStore(docs []CouchDoc) (error, []string, []string) {
 	docsMap := make(map[string]CouchDoc)
 	for _, v := range docs {
 		docsMap[v.GetID()] = v
 	}
 	resp, err := db.Bulk(docs)
 	if err != nil {
-		return err
+		return err, nil, nil
 	}
 	var rebulkDocs []CouchDoc
+	var news []string
+	var updates []string
 	for _, v := range resp {
+		if v.Ok {
+			news = append(news, v.ID)
+		}
 		if v.Error == "conflict" {
 			//update
 			if vv, ok := docsMap[v.ID]; ok {
@@ -132,10 +137,11 @@ func (db *Database) MultiStore(docs []CouchDoc) error {
 					rebulkDocs = append(rebulkDocs, vv)
 				}
 			}
+			updates = append(updates, v.ID)
 		}
 	}
 	_, err = db.Bulk(rebulkDocs)
-	return err
+	return err, news, updates
 }
 
 // PutAttachment adds attachment to document

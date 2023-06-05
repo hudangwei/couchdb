@@ -11,7 +11,7 @@ type DatabaseService interface {
 	Post(doc CouchDoc) (*DocumentResponse, error)
 	Delete(doc CouchDoc) (*DocumentResponse, error)
 	Store(doc CouchDoc) (*DocumentResponse, error)
-	MultiStore(docs []CouchDoc) error
+	MultiStore(docs []CouchDoc) (error, []string, []string)
 	PutAttachmentToDoc(doc CouchDoc, path string) (*DocumentResponse, error)
 	Bulk(docs []CouchDoc) ([]DocumentResponse, error)
 	Purge(req map[string][]string) (*PurgeResponse, error)
