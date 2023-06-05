@@ -95,7 +95,6 @@ func (c *CouchDBClient) do(rawurl, method string, in, out interface{}) error {
 	defer body.Close()
 	if out != nil {
 		b, _ := ioutil.ReadAll(body)
-		fmt.Println(string(b))
 		return json.Unmarshal(b, out)
 		// return json.NewDecoder(body).Decode(out)
 	}
