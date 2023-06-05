@@ -140,7 +140,10 @@ func (db *Database) MultiStore(docs []CouchDoc) (error, []string, []string) {
 			updates = append(updates, v.ID)
 		}
 	}
-	_, err = db.Bulk(rebulkDocs)
+	if len(rebulkDocs) > 0 {
+		_, err = db.Bulk(rebulkDocs)
+	}
+
 	return err, news, updates
 }
 
